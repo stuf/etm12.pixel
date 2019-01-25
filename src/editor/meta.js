@@ -4,6 +4,12 @@ import * as L from 'partial.lenses';
 import { rgb } from 'd3-color';
 
 export const currentStateIn = U.view('current');
+export const paletteIn = U.view('palette');
+
+export const fstIn = U.view(0);
+export const sndIn = U.view(1);
+
+export const colorIn = U.view('color');
 
 //
 

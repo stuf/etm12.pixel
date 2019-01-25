@@ -6,6 +6,7 @@ import * as L from 'partial.lenses';
 
 import * as S from '../shared';
 import * as M from './meta';
+import { Canvas, Palette } from './components';
 
 const Editor = ({ state }) => {
   const { width, height, scale } = U.destructure(state);
@@ -70,53 +71,7 @@ const Editor = ({ state }) => {
       {U.sink(U.parallel([
         drawPixel,
       ]))}
-      <div style={{
-        position: 'absolute',
-        left: 0,
-        top: 0,
-      }}>
-        <code>{U.stringify(state)}</code>
-      </div>
-
-      <div className="editor__canvas-wrapper">
-        <div className="editor__canvas-wrapper__grid-element" />
-        <div className="editor__canvas-wrapper__grid-element--empty" />
-        <div className="editor__canvas-wrapper__grid-element" />
-
-        <div className="editor__canvas-wrapper__grid-element--empty" />
-
-        <canvas ref={U.refTo(canvas)}
-                className="editor__canvas"
-                width={width}
-                height={height}
-                style={{
-                  width: U.view(0, scaledSize),
-                  height: U.view(1, scaledSize),
-                }} />
-        <div className="editor__canvas-wrapper__grid-element--empty" />
-
-        <div className="editor__canvas-wrapper__grid-element" />
-        <div className="editor__canvas-wrapper__grid-element--empty" />
-        <div className="editor__canvas-wrapper__grid-element" />
-      </div>
-
-      <div className="palette">
-        {U.thru(
-          state,
-          U.view('palette'),
-          U.mapElems((it, i) =>
-            <button key={i}
-                    className={U.cns(
-                      'palette__item',
-                      U.when(R.identical(it, U.view('color', currentState)), 'palette__item--selected')
-                    )}
-                    onClick={() => U.view('color', currentState).set(it.get())}
-                    style={{
-                      backgroundColor: R.toString(it),
-                      borderColor: R.toString(it.map(c => c.darker(1)))
-                    }} />)
-        )}
-      </div>
+      <Canvas state={state} />
     </section>
   );
 };

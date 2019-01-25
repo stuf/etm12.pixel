@@ -12,7 +12,7 @@ const Palette = ({ colors, selected }) =>
                   'palette__item',
                   U.when(R.identical(color, selected), 'palette__item--selected'),
                 )}
-                onClick={() => selected.set(color)} />)
+                onClick={() => selected.set(color.get())} />)
     )}
   </section>;
 

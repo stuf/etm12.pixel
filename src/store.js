@@ -25,4 +25,14 @@ export default store;
 
 //
 
-store.log('store');
+store.onValue(v => {
+  console.group('state update');
+  console.info('state =>', v);
+
+  console.groupCollapsed('trace');
+  console.trace();
+  console.groupEnd();
+  console.groupEnd();
+})
+
+// store.log('store');
