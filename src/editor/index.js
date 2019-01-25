@@ -1,10 +1,10 @@
 import * as React from 'karet';
 import * as K from 'kefir';
 import * as U from 'karet.util';
-import * as R from 'ramda';
+import * as R from 'kefir.ramda';
 import * as L from 'partial.lenses';
 
-import * as S from './shared';
+import * as S from '../shared';
 import * as M from './meta';
 
 const Editor = ({ state }) => {
@@ -15,12 +15,9 @@ const Editor = ({ state }) => {
 
   const canvas = U.variable();
   const context = S.getCanvasContext('2d', canvas);
-  const canvasOffset = U.thru(
-    canvas,
-    U.mapValue(R.invoker(0, 'getBoundingClientRect')),
-  );
+  const canvasOffset = U.mapValue(R.invoker(0, 'getBoundingClientRect'), canvas);
 
-  //
+  // Mouse events
 
   const onMouseClick = S.takeEvents('click', canvas);
   const onMouseDown = S.takeEvents('mousedown', canvas);
@@ -28,14 +25,12 @@ const Editor = ({ state }) => {
 
   const onMouseDrag = U.thru(
     onMouseDown,
-    U.flatMapLatest(() => {
-      const onMouseUp = S.takeEvents('mouseup', canvas).take(1);
-
-      return U.thru(
+    U.flatMapLatest(() =>
+      U.takeUntilBy(
+        U.takeFirst(1, S.takeEvents('mouseup', canvas)),
         onMouseMove,
-        U.takeUntilBy(onMouseUp),
-      );
-    }),
+      ),
+    ),
   );
 
   const onDragSteps = U.thru(
@@ -51,31 +46,21 @@ const Editor = ({ state }) => {
       [onMouseClick, canvasOffset],
       R.unapply(R.identity),
     ),
+    U.mapValue(([ev, rect]) => [ev.pageX - rect.x, ev.pageY - rect.y]),
+  );
 
-    /** FIXME Rewrite me pls */
-    U.mapValue(L.get([L.pick({
-      c1: [0, L.props('pageX', 'pageY'), L.reread(R.values)],
-      c2: [1, L.props('x', 'y'), L.reread(R.values)],
-    })])),
-
-
-    U.mapValue(R.pipe(
-      R.values,
-      R.apply(R.zip),
-      R.map(R.apply(R.subtract)),
-    )),
-  )
+  const pixelForCurrentColor = U.view(['color', M.colorL, M.asClampedArrL], currentState);
+  const pixelImageData = S.makeImageData(1, 1, pixelForCurrentColor);
+  const clickedPixelCoords = S.getPixelCoordinates(scale, pixelOnCoordinates);
 
   const drawPixel = U.thru(
-    U.combine([context, currentState, S.getPixelCoordinates(scale, pixelOnCoordinates)], R.unapply(R.identity)),
-    U.mapValue(([ctx, cur, coords]) => {
-      const imageData = S.createPixel(cur.color);
-      return [ctx, cur, coords, imageData];
-    }),
-    U.on({ value: ([ctx, cur, coords, imageData]) => {
-      console.log({ ctx, cur, coords, imageData});
-      ctx.putImageData(imageData, coords[0], coords[1]);
-    }}),
+    U.combine(
+      [pixelImageData, clickedPixelCoords, context],
+      R.unapply(R.identity),
+    ),
+    U.on({
+      value: R.apply(S.putContextImageData),
+    })
   );
 
   //
@@ -92,8 +77,8 @@ const Editor = ({ state }) => {
       }}>
         <code>{U.stringify(state)}</code>
       </div>
+
       <div className="editor__canvas-wrapper">
-        {/* Dummy elements */}
         <div className="editor__canvas-wrapper__grid-element" />
         <div className="editor__canvas-wrapper__grid-element--empty" />
         <div className="editor__canvas-wrapper__grid-element" />
@@ -113,6 +98,24 @@ const Editor = ({ state }) => {
         <div className="editor__canvas-wrapper__grid-element" />
         <div className="editor__canvas-wrapper__grid-element--empty" />
         <div className="editor__canvas-wrapper__grid-element" />
+      </div>
+
+      <div className="palette">
+        {U.thru(
+          state,
+          U.view('palette'),
+          U.mapElems((it, i) =>
+            <button key={i}
+                    className={U.cns(
+                      'palette__item',
+                      U.when(R.identical(it, U.view('color', currentState)), 'palette__item--selected')
+                    )}
+                    onClick={() => U.view('color', currentState).set(it.get())}
+                    style={{
+                      backgroundColor: R.toString(it),
+                      borderColor: R.toString(it.map(c => c.darker(1)))
+                    }} />)
+        )}
       </div>
     </section>
   );

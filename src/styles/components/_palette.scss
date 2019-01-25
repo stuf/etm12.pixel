@@ -1,0 +1,22 @@
+$palette__item--active-offset: remify(-8px);
+
+@debug $palette__item--active-offset;
+
+.palette {
+  border: dashed 1px #f00;
+}
+
+.palette__item {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 4px;
+  border: 0;
+
+  &--active,
+  &:hover,
+  &:active,
+  &:focus {
+    transform: translateY(-4px);
+    border: solid 4px;
+  }
+}
